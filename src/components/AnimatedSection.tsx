@@ -35,4 +35,31 @@ export default function AnimatedSection({
     }
 
     setState("hidden");
-    const observer = new Intersect
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setState("visible");
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.15 }
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  const revealClass =
+    state === "hidden" ? "reveal" : state === "visible" ? "reveal reveal-visible" : "";
+
+  return (
+    <div
+      id={id}
+      ref={ref}
+      className={`${revealClass} ${className}`}
+      style={{ transitionDelay: `${delay}ms` }}
+    >
+      {children}
+    </div>
+  );
+}
