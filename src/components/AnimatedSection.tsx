@@ -9,7 +9,10 @@ type AnimatedSectionProps = {
   id?: string;
 };
 
-// Fades and slides a section into view the first time it enters the viewport.
+// Progressive enhancement: content is fully visible by default (even before
+// the JS bundle loads). Once hydrated, sections still below the viewport get
+// hidden and fade in the first time they enter view. Sections already in view
+// are never hidden, so the page never shows up blank.
 export default function AnimatedSection({
   children,
   className = "",
@@ -17,34 +20,19 @@ export default function AnimatedSection({
   id,
 }: AnimatedSectionProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
+  const [state, setState] = useState<"initial" | "hidden" | "visible">(
+    "initial"
+  );
 
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.15 }
-    );
+    // Already (nearly) in view at hydration time: keep it visible, no animation.
+    if (node.getBoundingClientRect().top < window.innerHeight * 0.9) {
+      setState("visible");
+      return;
+    }
 
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
-
-  return (
-    <div
-      id={id}
-      ref={ref}
-      className={`reveal ${visible ? "reveal-visible" : ""} ${className}`}
-      style={{ transitionDelay: `${delay}ms` }}
-    >
-      {children}
-    </div>
-  );
-}
+    setState("hidden");
+    const observer = new Intersect
